@@ -16,11 +16,11 @@ const axios = require("axios");
 const cronExpression = `* * * * *`;
 cron.schedule(cronExpression, async () => {
   try {
-    const currentHour = new Date().getHours();
-    const response = await axios.get(`http://ehoa.app/api/get-reminders/0/2`);
-    console.log(response.data);
-    response.data.reminders.forEach((user) => {
-      const body = "";
+    let currentHour = new Date().getHours();
+    var res = await axios.get(`http://ehoa.app/api/get-reminders/0/2`);
+    console.log(res.data);
+    res.data.reminders.forEach((user) => {
+      let body = "";
       if (user.r_id == 0) {
         body = "Custom Message";
       }
@@ -38,7 +38,8 @@ cron.schedule(cronExpression, async () => {
           title: "You have notification from ehoa",
           body: body,
         },
-        token: user.fcm_token,
+        token:
+          "eL92el72QyuQIctg8GYSx4:APA91bEfXphGt897yzGn8Y--NzNiZ0mfP_T1baqianUfwBBvtrUagr0uosV6IpeNo6x4sk85cv7r6agHh3FBryRGuJimpIDuLB4DRZs3sHThy2hARYjlhwUSwzj0P_lj9vlbTnufFLuu",
       };
       FCM.send(message, function (err, resp) {
         if (err) {
