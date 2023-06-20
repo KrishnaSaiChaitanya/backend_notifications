@@ -13,7 +13,7 @@ const server = express();
 const axios = require("axios");
 
 // for (let hour = 1; hour <= 24; hour++) {
-const cronExpression = `0 * * * *`;
+const cronExpression = `* * * * *`;
 cron.schedule(cronExpression, async () => {
   try {
     const currentHour = new Date().getHours();
