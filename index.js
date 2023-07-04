@@ -41,6 +41,10 @@ cron.schedule(cronExpression, async () => {
     let currentHour = new Date().getHours();
     var res = await axios.get(`http://ehoa.app/api/get-reminders/5`);
     console.log(res.data);
+    var res1 = await axios.get(
+      `https://fantom-server.onrender.com/api/products`
+    );
+    console.log(res1.data);
     for (let i = res.data.length - 1; i >= 0; i--) {
       if (res.data[i].r_type === 1) {
         var number =
@@ -129,17 +133,17 @@ cron.schedule(cronExpression, async () => {
           "dMguij_EQFq-gnxMGwiMqy:APA91bEQIUWAQlDFwSnLcpfHmkGbjSQPgSXKu32PUdJcQj-Ju8UprQ97nAG096DaKmAxYsRRl7PBSrKriLelsc2c8fAk7iPUWjzPZg6qpXlYCNx2Qkbh6QOLJ-nNAcqm0i-bwZ-VvADR",
       };
       console.log("message is :- ", message);
-      try {
-        FCM.send(message, function (err, resp) {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log("Notificat");
-          }
-        });
-      } catch (err) {
-        console.log(err);
-      }
+      // try {
+      //   FCM.send(message, function (err, resp) {
+      //     if (err) {
+      //       console.log(err);
+      //     } else {
+      //       console.log("Notificat");
+      //     }
+      //   });
+      // } catch (err) {
+      //   console.log(err);
+      // }
     });
     // console.log("hello i working yahooooo.....");
   } catch (error) {
