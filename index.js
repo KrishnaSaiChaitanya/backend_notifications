@@ -59,39 +59,42 @@ cron.schedule("* * * * *", async () => {
       {}
     );
     console.log("Response from API:", response.data);
-    const bookingDetails = response.data;
+    const bookingDetails = response.data.data;
     const currentTime = new Date();
-    for (const bookingData of bookingDetails.data) {
-      const startTime = new Date(
-        bookingData.date + " " + bookingData.slot_start_time
-      );
-      const timeDifference = (startTime - currentTime) / 60000;
-      if (timeDifference === 5) {
-        // If the booking time is exactly 5 minutes before the slot start time,
-        // make the additional API request and send a notification
-        const fcmResponse = await axios.post(
-          "https://tidasports.com/secure/api/notification/find_fcm_token",
-          { user_id: bookingData.user_id }
+
+    if (bookingDetails && Array.isArray(bookingDetails)) {
+      for (const bookingData of bookingDetails) {
+        const startTime = new Date(
+          bookingData.date + " " + bookingData.slot_start_time
         );
-        const fcmToken = fcmResponse.data.fcm_token;
-        const message = {
-          to: fcmToken,
-          notification: {
-            title: "Slot Booking Alert",
-            body: "Your booking slot is going to start in 5min",
-          },
-        };
-        FCM.send(message, (err, response) => {
-          if (err) {
-            console.error("Error sending FCM notification:", err);
-            res.status(500).json({ error: "Error sending FCM notification" });
-          } else {
-            console.log("FCM notification sent successfully:", response);
-            res
-              .status(200)
-              .json({ message: "FCM notification sent successfully" });
-          }
-        });
+        const timeDifference = (startTime - currentTime) / 60000;
+        if (timeDifference === 5) {
+          // If the booking time is exactly 5 minutes before the slot start time,
+          // make the additional API request and send a notification
+          const fcmResponse = await axios.post(
+            "https://tidasports.com/secure/api/notification/find_fcm_token",
+            { user_id: bookingData.user_id }
+          );
+          const fcmToken = fcmResponse.data.fcm_token;
+          const message = {
+            to: fcmToken,
+            notification: {
+              title: "Slot Booking Alert",
+              body: "Your booking slot is going to start in 5min",
+            },
+          };
+          FCM.send(message, (err, response) => {
+            if (err) {
+              console.error("Error sending FCM notification:", err);
+              res.status(500).json({ error: "Error sending FCM notification" });
+            } else {
+              console.log("FCM notification sent successfully:", response);
+              res
+                .status(200)
+                .json({ message: "FCM notification sent successfully" });
+            }
+          });
+        }
       }
     }
   } catch (error) {
