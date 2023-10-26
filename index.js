@@ -1,10 +1,11 @@
 const express = require("express");
 const admin = require("firebase-admin");
 const cron = require("node-cron");
-var fcm = require("fcm-notification");
-var serviceAccount = require("./ehoa_firebase_key.json");
-var certpath = admin.credential.cert(serviceAccount);
-var FCM = new fcm(certpath);
+const FormData = require("form-data");
+const fcm = require("fcm-notification");
+const serviceAccount = require("./tida_firebase_key.json");
+const certpath = admin.credential.cert(serviceAccount);
+const FCM = new fcm(certpath);
 admin.initializeApp({
   credential: certpath,
 });
@@ -12,146 +13,92 @@ admin.initializeApp({
 const server = express();
 const axios = require("axios");
 
-// function getDifferenceInDays(date) {
-//   console.log("hello", date);
-//   const givenDate = new Date(date.toISOString().substring(0, 10));
-//   const currentDate = new Date(new Date().toISOString().substring(0, 10));
-//   const differenceInMs = currentDate - givenDate;
-//   const differenceInDays = Math.floor(differenceInMs / (1000 * 60 * 60 * 24));
-//   return differenceInDays;
-// }
-function getDifferenceInDays(dateStr) {
-  if (typeof dateStr !== "string") {
-    throw new Error("Invalid date string");
-  }
-  const date = new Date(dateStr);
-  if (isNaN(date)) {
-    throw new Error("Invalid date");
-  }
-  const givenDate = new Date(date.toISOString().substring(0, 10));
-  const currentDate = new Date(new Date().toISOString().substring(0, 10));
-  const differenceInMs = currentDate - givenDate;
-  const differenceInDays = Math.floor(differenceInMs / (1000 * 60 * 60 * 24));
-  return differenceInDays;
-}
-
-const cronExpression = `* * * * *`;
-cron.schedule(cronExpression, async () => {
+server.post("/partner_notification", express.json(), async (req, res) => {
+  const { userid } = req.body;
   try {
-    let currentHour = new Date().getHours();
-    var res = await axios.get(`http://ehoa.app/api/get-reminders/5`);
-    console.log(res.data);
-    var res1 = await axios.get(
-      `https://fantom-server.onrender.com/api/products`
-    );
-    console.log(res1.data);
-    for (let i = res.data.length - 1; i >= 0; i--) {
-      if (res.data[i].r_type === 1) {
-        var number =
-          (getDifferenceInDays(res.data[i].period_day) %
-            res.data[i].period_length) +
-          1;
-        if (number < 1 || number > 3) {
-          console.log("The number is not in the range 1 to 3.");
-          res.data.splice(i, 1);
-        }
-      } else if (res.data[i].r_type === 2) {
-        var number =
-          (getDifferenceInDays(res.data[i].period_day) %
-            res.data[i].period_length) +
-          1;
-        if (number < 4 || number > 6) {
-          console.log("The number is not in the range 1 to 3.");
-          res.data.splice(i, 1);
-        }
-      } else if (res.data[i].r_type === 3) {
-        var number =
-          (getDifferenceInDays(res.data[i].period_day) %
-            res.data[i].period_length) +
-          1;
-        if (number < 7 || number > 12) {
-          console.log("The number is not in the range 1 to 3.");
-          res.data.splice(i, 1);
-        }
-      } else if (res.data[i].r_type === 4) {
-        var number =
-          (getDifferenceInDays(res.data[i].period_day) %
-            res.data[i].period_length) +
-          1;
-        if (number < 13 || number > 17) {
-          console.log("The number is not in the range 13 to 17.");
-          res.data.splice(i, 1);
-        }
-      } else if (res.data[i].r_type === 5) {
-        var number =
-          (getDifferenceInDays(res.data[i].period_day) %
-            res.data[i].period_length) +
-          1;
-        if (number < 17 || number > 23) {
-          console.log("The number is not in the range 1 to 3.");
-          res.data.splice(i, 1);
-        }
-      } else if (res.data[i].r_type === 6) {
-        var number =
-          (getDifferenceInDays(res.data[i].period_day) %
-            res.data[i].period_length) +
-          1;
-        if (number < 24 || number > 35) {
-          console.log("The number is not in the range 24 to 35.");
-          res.data.splice(i, 1);
-        }
-        // } else {
-        //   var number =
-        //     (getDifferenceInDays(res.data[i].period_day) % res[i].period_length) + 1;
-        //   if (number < 1 || number > 3) {
-        //     console.log("The number is not in the range 1 to 3.");
-        //     res.splice(i, 1);
-        //   }
-      }
-    }
-    res.data.forEach((user) => {
-      let body = "";
-      if (user.r_type == 0) {
-        body = "Custom Message";
-      } else if (user.r_type == 1) {
-        body = "1";
-      } else if (user.r_type == 2) {
-        body = "2";
-      } else if (user.r_type == 3) {
-        body = "3";
-      } else if (user.r_type == 4) {
-        body = "4";
-      } else {
-        body = "i don't have any content yet";
-      }
-      let message = {
-        notification: {
-          title: "You have notification from ehoa",
-          body: body,
+    const form = new FormData();
+    form.append("userid", userid);
+    const response = await axios.post(
+      "https://tidasports.com/secure/api/notification/find_fcm_token",
+      form,
+      {
+        headers: {
+          ...form.getHeaders(),
         },
-        token:
-          "dMguij_EQFq-gnxMGwiMqy:APA91bEQIUWAQlDFwSnLcpfHmkGbjSQPgSXKu32PUdJcQj-Ju8UprQ97nAG096DaKmAxYsRRl7PBSrKriLelsc2c8fAk7iPUWjzPZg6qpXlYCNx2Qkbh6QOLJ-nNAcqm0i-bwZ-VvADR",
-      };
-      console.log("message is :- ", message);
-      // try {
-      //   FCM.send(message, function (err, resp) {
-      //     if (err) {
-      //       console.log(err);
-      //     } else {
-      //       console.log("Notificat");
-      //     }
-      //   });
-      // } catch (err) {
-      //   console.log(err);
-      // }
+      }
+    );
+    const fcmToken = response.data.fcm_token;
+    const message = {
+      to: fcmToken,
+      notification: {
+        title: "Payment Update",
+        body: "You have recevied a payment from a Tida customer ",
+      },
+    };
+    FCM.send(message, (err, response) => {
+      if (err) {
+        console.error("Error sending FCM notification:", err);
+        res.status(500).json({ error: "Error sending FCM notification" });
+      } else {
+        console.log("FCM notification sent successfully:", response);
+        res.status(200).json({ message: "FCM notification sent successfully" });
+      }
     });
-    // console.log("hello i working yahooooo.....");
   } catch (error) {
-    console.error("Error retrieving data from API:", error);
+    console.error("An error occurred while making the API request:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while making the API request" });
   }
 });
-// }
 
-server.listen(3000, () => {
-  console.log("Server is running on port 3000");
+cron.schedule("* * * * *", async () => {
+  try {
+    const response = await axios.post(
+      "https://tidasports.com/secure/api/notification/get_booking_details",
+      {}
+    );
+    console.log("Response from API:", response.data);
+    const bookingDetails = response.data;
+    const currentTime = new Date();
+    for (const bookingData of bookingDetails.data) {
+      const startTime = new Date(
+        bookingData.date + " " + bookingData.slot_start_time
+      );
+      const timeDifference = (startTime - currentTime) / 60000;
+      if (timeDifference === 5) {
+        // If the booking time is exactly 5 minutes before the slot start time,
+        // make the additional API request and send a notification
+        const fcmResponse = await axios.post(
+          "https://tidasports.com/secure/api/notification/find_fcm_token",
+          { user_id: bookingData.user_id }
+        );
+        const fcmToken = fcmResponse.data.fcm_token;
+        const message = {
+          to: fcmToken,
+          notification: {
+            title: "Slot Booking Alert",
+            body: "Your booking slot is going to start in 5min",
+          },
+        };
+        FCM.send(message, (err, response) => {
+          if (err) {
+            console.error("Error sending FCM notification:", err);
+            res.status(500).json({ error: "Error sending FCM notification" });
+          } else {
+            console.log("FCM notification sent successfully:", response);
+            res
+              .status(200)
+              .json({ message: "FCM notification sent successfully" });
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.error("An error occurred while making the API request:", error);
+  }
+});
+
+server.listen(5000, () => {
+  console.log("Server is running on port 5000");
 });
